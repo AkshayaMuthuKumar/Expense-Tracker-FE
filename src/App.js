@@ -1,24 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+// App.js
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import Dashboard from './Dashboard';
+import Auth from './Auth';
+import axios from 'axios';
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.get('http://localhost:5000/user', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(response => {
+        setUser({ name: response.data.username }); // Assuming the API returns the username
+      })
+      .catch(error => {
+        console.log('Failed to fetch user', error);
+      });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Auth setUser={setUser} />} />
+        <Route
+          path="/dashboard"
+          element={<Dashboard user={user} onLogout={handleLogout} />}
+        />
+      </Routes>
+    </Router>
   );
 }
 
